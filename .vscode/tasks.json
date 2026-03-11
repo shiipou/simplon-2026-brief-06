@@ -1,0 +1,78 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Start Tomcat",
+            "command": ".\\gradlew.bat",
+            "type": "shell",
+            "args": [
+                "run"
+            ],
+            "problemMatcher": [
+                "$gradle"
+            ],
+            "presentation": {
+                "panel": "dedicated",
+                "reveal": "always"
+            },
+            "group": "build",
+            "dependsOn": [
+                "Rebuild"
+            ],
+            "dependsOrder": "parallel"
+        },
+        {
+            "label": "Start Tomcat (Debug)",
+            "command": ".\\gradlew.bat",
+            "type": "shell",
+            "args": [
+                "run",
+                "--debug-jvm"
+            ],
+            "isBackground": true,
+            "problemMatcher": [
+                {
+                    "base": "$gradle",
+                    "background": {
+                        "activeOnStart": true,
+                        "beginsPattern": ".*",
+                        "endsPattern": ".*Listening for transport dt_socket at address: 5005.*"
+                    }
+                }
+            ],
+            "presentation": {
+                "panel": "dedicated",
+                "reveal": "always"
+            },
+            "group": "build",
+            "dependsOn": [
+                "Rebuild"
+            ],
+            "dependsOrder": "parallel"
+        },
+        {
+            "label": "Rebuild",
+            "type": "shell",
+            "command": ".\\gradlew.bat",
+            "args": [
+                "-t",
+                "classes"
+            ],
+            "isBackground": true,
+            "problemMatcher": [
+                {
+                    "base": "$gradle",
+                    "background": {
+                        "activeOnStart": true,
+                        "beginsPattern": ".*",
+                        "endsPattern": ".*Waiting for changes to input files.*"
+                    }
+                }
+            ],
+            "presentation": {
+                "panel": "dedicated",
+                "reveal": "always"
+            }
+        }
+    ]
+}
