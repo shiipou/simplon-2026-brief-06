@@ -1,10 +1,11 @@
 package fr.simplon.controllers;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import fr.simplon.models.Comment;
 import fr.simplon.models.Post;
 import fr.simplon.models.User;
 import fr.simplon.utils.AuthUtils;
@@ -48,14 +49,12 @@ public class PostController extends HttpServlet {
         User currentUser = AuthUtils.getLoggedUser(req);
 
         // Récupérer les commentaires (posts dont le parent est ce post)
-        List<Post> comments = new ArrayList<>();
-        for (Post p : DataStore.getPosts()) {
-            if (p.getParent() != null && p.getParent().getId() == postId) {
-                comments.add(p);
-            }
-        }
-        // Tri du plus récent au plus vieux
-        comments.sort(Comparator.comparing(Post::getCreatedAt).reversed());
+        List<Post> comments = DataStore.getPosts().stream()
+            .filter(Post::isComment)
+            .map(p -> (Comment) p)
+            .filter(c -> c.getParent() != null && c.getParent().getId() == postId)
+            .sorted(Comparator.comparing(Post::getCreatedAt).reversed())
+            .collect(Collectors.toList());
 
         // Likes du post principal
         long likeCount = DataStore.countLikes(postId);
@@ -105,7 +104,7 @@ public class PostController extends HttpServlet {
         }
 
         // Créer le commentaire (post avec parent)
-        Post comment = new Post(currentUser, content.trim(), parentPost);
+        Post comment = new Comment(currentUser, content.trim(), parentPost);
         DataStore.addPost(comment);
 
         resp.sendRedirect("/post?id=" + postId);

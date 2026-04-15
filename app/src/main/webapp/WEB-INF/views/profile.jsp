@@ -4,6 +4,7 @@
 <%@ page import="java.time.format.DateTimeFormatter" %>
 <%@ page import="fr.simplon.models.Post" %>
 <%@ page import="fr.simplon.models.User" %>
+<%@ page import="fr.simplon.models.Attachment" %>
 
 <%
     User currentUser = (User) request.getAttribute("currentUser");
@@ -14,8 +15,8 @@
     Map<Long, Long> postLikeCounts = (Map<Long, Long>) request.getAttribute("postLikeCounts");
     Map<Long, Boolean> postLikedByUser = (Map<Long, Boolean>) request.getAttribute("postLikedByUser");
     Map<Long, Long> postCommentCounts = (Map<Long, Long>) request.getAttribute("postCommentCounts");
-    int followingCount = (Integer) request.getAttribute("followingCount");
-    int followersCount = (Integer) request.getAttribute("followersCount");
+    long followingCount = (Long) request.getAttribute("followingCount");
+    long followersCount = (Long) request.getAttribute("followersCount");
     DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 %>
 
@@ -28,93 +29,103 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/app.css">
 </head>
 <body>
-    <header class="top-bar">
-        <h1 class="logo"><a href="/feed">Miniature</a></h1>
-        <div class="top-bar-right">
-            <a href="/profile" class="current-user-link"><%=currentUser.getUsername()%></a>
-            <form method="post" action="/logout" class="inline-form">
-                <button type="submit" class="btn btn-danger btn-sm">Déconnexion</button>
+    <header>
+        <h1><a href="/feed">Miniature</a></h1>
+        <nav>
+            <a href="/profile"><%=currentUser.getUsername()%></a>
+            <form method="post" action="/logout">
+                <button type="submit">Déconnexion</button>
             </form>
-        </div>
+        </nav>
     </header>
 
-    <main>
-        <a href="/feed" class="back-link">&larr; Retour au fil</a>
+    <main id="profile">
+        <a href="/feed">&larr; Retour au fil</a>
 
         <!-- En-tête du profil -->
-        <section class="profile-header">
-            <div class="profile-avatar"><%=profileUser.getUsername().substring(0, 1).toUpperCase()%></div>
-            <div class="profile-info">
-                <h2 class="profile-username"><%=profileUser.getUsername()%></h2>
-                <div class="profile-stats">
-                    <span><strong><%=posts.size()%></strong> publications</span>
-                    <span><strong><%=followersCount%></strong> abonnés</span>
-                    <span><strong><%=followingCount%></strong> abonnements</span>
-                </div>
-                <% if (profileUser.getBio() != null && !profileUser.getBio().isEmpty()) { %>
-                    <p class="profile-bio"><%=profileUser.getBio()%></p>
-                <% } else if (isOwnProfile) { %>
-                    <p class="profile-bio profile-bio-empty">Aucune bio. Modifiez votre profil pour en ajouter une.</p>
-                <% } %>
-            </div>
-            <div class="profile-action">
-                <% if (!isOwnProfile) { %>
-                    <form method="post" action="/follow" class="inline-form">
-                        <input type="hidden" name="userId" value="<%=profileUser.getId()%>" />
-                        <input type="hidden" name="redirect" value="/profile?id=<%=profileUser.getId()%>" />
-                        <button type="submit" class="btn <%= isFollowing ? "btn-following" : "btn-primary" %>">
-                            <%= isFollowing ? "Abonné" : "Suivre" %>
-                        </button>
-                    </form>
-                <% } %>
-            </div>
+        <section id="info">
+            <span><%=profileUser.getUsername().substring(0, 1).toUpperCase()%></span>
+            <h2><%=profileUser.getUsername()%></h2>
+            <ul>
+                <li><strong><%=posts.size()%></strong> publications</li>
+                <li><strong><%=followersCount%></strong> abonnés</li>
+                <li><strong><%=followingCount%></strong> abonnements</li>
+            </ul>
+            <% if (profileUser.getBio() != null && !profileUser.getBio().isEmpty()) { %>
+                <p><%=profileUser.getBio()%></p>
+            <% } else if (isOwnProfile) { %>
+                <p><em>Aucune bio. Modifiez votre profil pour en ajouter une.</em></p>
+            <% } %>
+            <% if (!isOwnProfile) { %>
+                <form method="post" action="/follow">
+                    <input type="hidden" name="userId" value="<%=profileUser.getId()%>" />
+                    <input type="hidden" name="redirect" value="/profile?id=<%=profileUser.getId()%>" />
+                    <button type="submit" <%= isFollowing ? "class=\"following\"" : "" %>>
+                        <%= isFollowing ? "Abonné" : "Suivre" %>
+                    </button>
+                </form>
+            <% } %>
         </section>
 
         <!-- Formulaire d'édition du profil (uniquement pour son propre profil) -->
         <% if (isOwnProfile) { %>
-            <section class="profile-edit">
+            <section id="edit">
                 <h3>Modifier mon profil</h3>
-                <form method="post" action="/profile" class="profile-edit-form">
+                <form method="post" action="/profile">
                     <label for="bio">Bio</label>
                     <textarea id="bio" name="bio" rows="3" placeholder="Décrivez-vous en quelques mots..."><%=profileUser.getBio() != null ? profileUser.getBio() : ""%></textarea>
-                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    <button type="submit">Enregistrer</button>
                 </form>
             </section>
         <% } %>
 
         <!-- Publications de l'utilisateur -->
-        <section class="profile-posts">
+        <section id="publications">
             <h3>Publications</h3>
             <% if (posts == null || posts.isEmpty()) { %>
-                <p class="empty-message">Aucune publication pour le moment.</p>
+                <p>Aucune publication pour le moment.</p>
             <% } else { %>
-                <div class="post-list">
                 <% for (Post post : posts) {
                     long likes = postLikeCounts.get(post.getId());
                     boolean liked = postLikedByUser.get(post.getId());
                     long commentCount = postCommentCounts.get(post.getId());
                 %>
-                    <article class="post-card">
-                        <div class="post-header">
-                            <strong class="post-author"><%=profileUser.getUsername()%></strong>
-                            <time class="post-date"><%=post.getCreatedAt().format(fmt)%></time>
-                        </div>
-                        <p class="post-content"><%=post.getContent()%></p>
-                        <div class="post-actions">
-                            <form method="post" action="/like" class="inline-form">
+                    <article>
+                        <header>
+                            <strong><%=profileUser.getUsername()%></strong>
+                            <time datetime="<%=post.getCreatedAt()%>"><%=post.getCreatedAt().format(fmt)%></time>
+                        </header>
+                        <p><%=post.getContent()%></p>
+                        <% for (Attachment att : post.getAttachments()) { %>
+                            <% if (att.isImage()) { %>
+                                <figure>
+                                    <img src="<%=att.getImage()%>" alt="Pièce jointe" />
+                                </figure>
+                            <% } else if (att.isSharedPost() && att.getPost() != null) { %>
+                                <aside>
+                                    <header>
+                                        <a href="/profile?id=<%=att.getPost().getOwner().getId()%>"><strong><%=att.getPost().getOwner().getUsername()%></strong></a>
+                                        <time datetime="<%=att.getPost().getCreatedAt()%>"><%=att.getPost().getCreatedAt().format(fmt)%></time>
+                                    </header>
+                                    <p><%=att.getPost().getContent()%></p>
+                                    <a href="/post?id=<%=att.getPost().getId()%>">Voir le post original &rarr;</a>
+                                </aside>
+                            <% } %>
+                        <% } %>
+                        <footer>
+                            <form method="post" action="/like">
                                 <input type="hidden" name="postId" value="<%=post.getId()%>" />
                                 <input type="hidden" name="redirect" value="/profile?id=<%=profileUser.getId()%>" />
-                                <button type="submit" class="btn-action <%= liked ? "liked" : "" %>">
+                                <button type="submit" <%= liked ? "class=\"liked\"" : "" %>>
                                     <%= liked ? "&#9829;" : "&#9825;" %> <%=likes%>
                                 </button>
                             </form>
-                            <a href="/post?id=<%=post.getId()%>" class="btn-action">
+                            <a href="/post?id=<%=post.getId()%>">
                                 &#128172; <%=commentCount%>
                             </a>
-                        </div>
+                        </footer>
                     </article>
                 <% } %>
-                </div>
             <% } %>
         </section>
     </main>

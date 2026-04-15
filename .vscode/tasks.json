@@ -3,7 +3,7 @@
     "tasks": [
         {
             "label": "Start Tomcat",
-            "command": ".\\gradlew.bat",
+            "command": "./gradlew",
             "type": "shell",
             "args": [
                 "run"
@@ -23,7 +23,7 @@
         },
         {
             "label": "Start Tomcat (Debug)",
-            "command": ".\\gradlew.bat",
+            "command": "./gradlew",
             "type": "shell",
             "args": [
                 "run",
@@ -53,7 +53,7 @@
         {
             "label": "Rebuild",
             "type": "shell",
-            "command": ".\\gradlew.bat",
+            "command": "./gradlew",
             "args": [
                 "-t",
                 "classes"

@@ -1,12 +1,13 @@
 package fr.simplon.controllers;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
+import fr.simplon.models.Comment;
 import fr.simplon.models.Post;
 import fr.simplon.models.User;
 import fr.simplon.utils.AuthUtils;
@@ -33,29 +34,21 @@ public class FeedController extends HttpServlet {
             tab = "recommendations";
         }
 
-        List<Post> feedPosts;
+        Stream<Post> feedPostsStream;
 
         if ("subscriptions".equals(tab)) {
             // Fil "Abonnements" : uniquement les posts des utilisateurs suivis
             List<User> followedUsers = DataStore.getFollowed(currentUser.getId());
-            feedPosts = new ArrayList<>();
-            for (Post post : DataStore.getPosts()) {
-                if (!post.isComment() && !post.isDraft() && followedUsers.contains(post.getOwner())) {
-                    feedPosts.add(post);
-                }
-            }
+            feedPostsStream = DataStore.getPosts().stream()
+                .filter(post -> !post.isComment() && !post.isDraft() && followedUsers.contains(post.getOwner()));
         } else {
             // Fil "Recommandations" : tous les posts (pas les commentaires)
-            feedPosts = new ArrayList<>();
-            for (Post post : DataStore.getPosts()) {
-                if (!post.isComment() && !post.isDraft()) {
-                    feedPosts.add(post);
-                }
-            }
+            feedPostsStream = DataStore.getPosts().stream()
+                .filter(post -> !post.isComment() && !post.isDraft());
         }
 
         // Tri par date de création décroissante
-        feedPosts.sort(Comparator.comparing(Post::getCreatedAt).reversed());
+        List<Post> feedPosts = feedPostsStream.sorted(Comparator.comparing(Post::getCreatedAt).reversed()).toList();
 
         // Préparer les données supplémentaires pour chaque post
         Map<Long, Long> postLikeCounts = new HashMap<>();
@@ -66,12 +59,11 @@ public class FeedController extends HttpServlet {
             postLikeCounts.put(post.getId(), DataStore.countLikes(post.getId()));
             postLikedByUser.put(post.getId(), DataStore.hasUserLikedPost(currentUser.getId(), post.getId()));
 
-            long commentCount = 0;
-            for (Post p : DataStore.getPosts()) {
-                if (p.getParent() != null && p.getParent().getId() == post.getId()) {
-                    commentCount++;
-                }
-            }
+            long commentCount = DataStore.getPosts().stream()
+                .filter(p -> p.isComment())
+                .map(p -> (Comment) p)
+                .filter(c -> c.getParent() != null && c.getParent().getId() == post.getId())
+                .count();
             postCommentCounts.put(post.getId(), commentCount);
         }
 

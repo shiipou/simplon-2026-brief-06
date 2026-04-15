@@ -9,11 +9,11 @@ public class Post {
 
     private long id;
     private User owner;
-    private Post parent; // null = post normal, non-null = commentaire
     private String content;
     private LocalDateTime createdAt;
     private boolean isDraft;
     private List<User> likes = new ArrayList<>();
+    private List<Attachment> attachments = new ArrayList<>();
 
     public Post() {
         this.id = ++nbPosts;
@@ -25,11 +25,6 @@ public class Post {
         this();
         this.owner = owner;
         this.content = content;
-    }
-
-    public Post(User owner, String content, Post parent) {
-        this(owner, content);
-        this.parent = parent;
     }
 
     public long getId() {
@@ -46,14 +41,6 @@ public class Post {
 
     public void setOwner(User owner) {
         this.owner = owner;
-    }
-
-    public Post getParent() {
-        return parent;
-    }
-
-    public void setParent(Post parent) {
-        this.parent = parent;
     }
 
     public String getContent() {
@@ -81,7 +68,7 @@ public class Post {
     }
 
     public boolean isComment() {
-        return parent != null;
+        return false;
     }
 
     public List<User> getLikes() {
@@ -100,5 +87,13 @@ public class Post {
 
     public boolean isLikedBy(User user) {
         return likes.contains(user);
+    }
+
+    public List<Attachment> getAttachments() {
+        return attachments;
+    }
+
+    public void addAttachment(Attachment attachment) {
+        attachments.add(attachment);
     }
 }

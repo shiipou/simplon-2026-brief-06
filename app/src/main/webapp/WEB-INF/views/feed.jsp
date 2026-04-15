@@ -4,6 +4,7 @@
 <%@ page import="java.time.format.DateTimeFormatter" %>
 <%@ page import="fr.simplon.models.Post" %>
 <%@ page import="fr.simplon.models.User" %>
+<%@ page import="fr.simplon.models.Attachment" %>
 
 <%
     User currentUser = (User) request.getAttribute("currentUser");
@@ -24,65 +25,81 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/app.css">
 </head>
 <body>
-    <header class="top-bar">
-        <h1 class="logo"><a href="/feed">Miniature</a></h1>
-        <div class="top-bar-right">
-            <a href="/profile" class="current-user-link"><%=currentUser.getUsername()%></a>
-            <form method="post" action="/logout" class="inline-form">
-                <button type="submit" class="btn btn-danger btn-sm">Déconnexion</button>
+    <header>
+        <h1><a href="/feed">Miniature</a></h1>
+        <nav>
+            <a href="/profile"><%=currentUser.getUsername()%></a>
+            <form method="post" action="/logout">
+                <button type="submit">Déconnexion</button>
             </form>
-        </div>
+        </nav>
     </header>
 
-    <main>
+    <main id="feed">
         <!-- Onglets -->
-        <nav class="tabs">
-            <a href="/feed?tab=recommendations" class="tab <%= "recommendations".equals(tab) ? "active" : "" %>">
+        <nav>
+            <a href="/feed?tab=recommendations" <%= "recommendations".equals(tab) ? "class=\"active\"" : "" %>>
                 Recommandations
             </a>
-            <a href="/feed?tab=subscriptions" class="tab <%= "subscriptions".equals(tab) ? "active" : "" %>">
+            <a href="/feed?tab=subscriptions" <%= "subscriptions".equals(tab) ? "class=\"active\"" : "" %>>
                 Abonnements
             </a>
         </nav>
 
         <!-- Formulaire nouveau post -->
-        <form method="post" action="/feed" class="new-post-form">
+        <form method="post" action="/feed">
             <input type="hidden" name="tab" value="<%=tab%>" />
             <textarea name="content" placeholder="Quoi de neuf ?" required rows="3"></textarea>
-            <button type="submit" class="btn btn-primary">Publier</button>
+            <button type="submit">Publier</button>
         </form>
 
         <!-- Liste des posts -->
         <% if (posts == null || posts.isEmpty()) { %>
-            <p class="empty-message">Aucun post à afficher.</p>
+            <p>Aucun post à afficher.</p>
         <% } else { %>
-            <div class="post-list">
+            <section id="posts">
             <% for (Post post : posts) {
                 long likes = postLikeCounts.get(post.getId());
                 boolean liked = postLikedByUser.get(post.getId());
                 long commentCount = postCommentCounts.get(post.getId());
             %>
-                <article class="post-card">
-                    <div class="post-header">
-                        <a href="/profile?id=<%=post.getOwner().getId()%>" class="post-author-link"><strong class="post-author"><%=post.getOwner().getUsername()%></strong></a>
-                        <time class="post-date"><%=post.getCreatedAt().format(fmt)%></time>
-                    </div>
-                    <p class="post-content"><%=post.getContent()%></p>
-                    <div class="post-actions">
-                        <form method="post" action="/like" class="inline-form">
+                <article>
+                    <header>
+                        <a href="/profile?id=<%=post.getOwner().getId()%>"><strong><%=post.getOwner().getUsername()%></strong></a>
+                        <time datetime="<%=post.getCreatedAt()%>"><%=post.getCreatedAt().format(fmt)%></time>
+                    </header>
+                    <p><%=post.getContent()%></p>
+                    <% for (Attachment att : post.getAttachments()) { %>
+                        <% if (att.isImage()) { %>
+                            <figure>
+                                <img src="<%=att.getImage()%>" alt="Pièce jointe" />
+                            </figure>
+                        <% } else if (att.isSharedPost() && att.getPost() != null) { %>
+                            <aside>
+                                <header>
+                                    <a href="/profile?id=<%=att.getPost().getOwner().getId()%>"><strong><%=att.getPost().getOwner().getUsername()%></strong></a>
+                                    <time datetime="<%=att.getPost().getCreatedAt()%>"><%=att.getPost().getCreatedAt().format(fmt)%></time>
+                                </header>
+                                <p><%=att.getPost().getContent()%></p>
+                                <a href="/post?id=<%=att.getPost().getId()%>">Voir le post original &rarr;</a>
+                            </aside>
+                        <% } %>
+                    <% } %>
+                    <footer>
+                        <form method="post" action="/like">
                             <input type="hidden" name="postId" value="<%=post.getId()%>" />
                             <input type="hidden" name="redirect" value="/feed?tab=<%=tab%>" />
-                            <button type="submit" class="btn-action <%= liked ? "liked" : "" %>">
+                            <button type="submit" <%= liked ? "class=\"liked\"" : "" %>>
                                 <%= liked ? "&#9829;" : "&#9825;" %> <%=likes%>
                             </button>
                         </form>
-                        <a href="/post?id=<%=post.getId()%>" class="btn-action">
+                        <a href="/post?id=<%=post.getId()%>">
                             &#128172; <%=commentCount%>
                         </a>
-                    </div>
+                    </footer>
                 </article>
             <% } %>
-            </div>
+            </section>
         <% } %>
     </main>
 </body>

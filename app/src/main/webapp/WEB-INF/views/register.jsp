@@ -11,14 +11,14 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/app.css">
 </head>
 <body>
-    <main class="auth-card">
-        <div class="auth-banner">
+    <main id="register">
+        <figure>
             <img src="${pageContext.request.contextPath}/assets/banner.webp" alt="Miniature" />
-        </div>
+        </figure>
         <h2>Inscription</h2>
 
         <% if (error != null) { %>
-            <p class="error-msg"><%=error%></p>
+            <p role="alert"><%=error%></p>
         <% } %>
 
         <form method="post">
@@ -34,11 +34,13 @@
             <label for="passwordConfirm">Confirmation du mot de passe</label>
             <input type="password" name="passwordConfirm" id="passwordConfirm" required />
 
-            <button type="submit" class="btn btn-primary">Créer mon compte</button>
+            <button type="submit">Créer mon compte</button>
         </form>
 
-        <p class="auth-link">Déjà un compte ? <a href="/login">Se connecter</a></p>
-        <p class="auth-link"><a href="/">&larr; Retour à l'accueil</a></p>
+        <footer>
+            <p>Déjà un compte ? <a href="/login">Se connecter</a></p>
+            <p><a href="/">&larr; Retour à l'accueil</a></p>
+        </footer>
     </main>
 </body>
 </html>

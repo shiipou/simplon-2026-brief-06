@@ -1,12 +1,12 @@
 package fr.simplon.controllers;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import fr.simplon.models.Comment;
 import fr.simplon.models.Post;
 import fr.simplon.models.User;
 import fr.simplon.utils.AuthUtils;
@@ -53,13 +53,10 @@ public class ProfileController extends HttpServlet {
         boolean isFollowing = currentUser.isFollowing(profileUser);
 
         // Posts de cet utilisateur (pas les commentaires, pas les brouillons)
-        List<Post> userPosts = new ArrayList<>();
-        for (Post post : DataStore.getPosts()) {
-            if (post.getOwner() == profileUser && !post.isComment() && !post.isDraft()) {
-                userPosts.add(post);
-            }
-        }
-        userPosts.sort(Comparator.comparing(Post::getCreatedAt).reversed());
+        List<Post> userPosts = DataStore.getPosts().stream()
+                .filter(post -> post.getOwner() == profileUser && !post.isComment() && !post.isDraft())
+                .sorted(Comparator.comparing(Post::getCreatedAt).reversed())
+                .toList();
 
         // Données supplémentaires pour les posts
         Map<Long, Long> postLikeCounts = new HashMap<>();
@@ -68,23 +65,19 @@ public class ProfileController extends HttpServlet {
         for (Post post : userPosts) {
             postLikeCounts.put(post.getId(), DataStore.countLikes(post.getId()));
             postLikedByUser.put(post.getId(), DataStore.hasUserLikedPost(currentUser.getId(), post.getId()));
-            long commentCount = 0;
-            for (Post p : DataStore.getPosts()) {
-                if (p.getParent() != null && p.getParent().getId() == post.getId()) {
-                    commentCount++;
-                }
-            }
+            long commentCount = DataStore.getPosts().stream()
+                    .filter(Post::isComment)
+                    .map(p -> (Comment) p)
+                    .filter(c -> c.getParent() != null && c.getParent().getId() == post.getId())
+                    .count();
             postCommentCounts.put(post.getId(), commentCount);
         }
 
         // Nombre d'abonnements et d'abonnés
-        int followingCount = profileUser.getFollowing().size();
-        int followersCount = 0;
-        for (User u : DataStore.getUsers()) {
-            if (u.isFollowing(profileUser)) {
-                followersCount++;
-            }
-        }
+        long followingCount = profileUser.getFollowing().size();
+        long followersCount = DataStore.getUsers().stream()
+                .filter(u -> u.isFollowing(profileUser))
+                .count();
 
         req.setAttribute("currentUser", currentUser);
         req.setAttribute("profileUser", profileUser);

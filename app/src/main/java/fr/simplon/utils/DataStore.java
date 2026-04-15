@@ -3,6 +3,7 @@ package fr.simplon.utils;
 import java.util.ArrayList;
 import java.util.List;
 
+import fr.simplon.models.Attachment;
 import fr.simplon.models.Post;
 import fr.simplon.models.User;
 
@@ -13,6 +14,7 @@ public abstract class DataStore {
 
     private static final List<User> users = new ArrayList<>();
     private static final List<Post> posts = new ArrayList<>();
+    private static final List<Attachment> attachments = new ArrayList<>();
 
     // ──── Users ────
 
@@ -40,6 +42,16 @@ public abstract class DataStore {
 
     public static void addPost(Post post) {
         posts.add(post);
+    }
+
+    // ──── Attachments ────
+
+    public static List<Attachment> getAttachments() {
+        return attachments;
+    }
+
+    public static void addAttachment(Attachment attachment) {
+        attachments.add(attachment);
     }
 
     // ──── Likes ────

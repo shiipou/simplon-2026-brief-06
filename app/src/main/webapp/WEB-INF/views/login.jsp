@@ -11,14 +11,14 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/app.css">
 </head>
 <body>
-    <main class="auth-card">
-        <div class="auth-banner">
+    <main id="login">
+        <figure>
             <img src="${pageContext.request.contextPath}/assets/banner.webp" alt="Miniature" />
-        </div>
+        </figure>
         <h2>Connexion</h2>
 
         <% if (error != null) { %>
-            <p class="error-msg"><%=error%></p>
+            <p role="alert"><%=error%></p>
         <% } %>
 
         <form method="post">
@@ -28,11 +28,13 @@
             <label for="password">Mot de passe</label>
             <input type="password" name="password" id="password" required />
 
-            <button type="submit" class="btn btn-primary">Se connecter</button>
+            <button type="submit">Se connecter</button>
         </form>
 
-        <p class="auth-link">Pas encore de compte ? <a href="/register">Créer un compte</a></p>
-        <p class="auth-link"><a href="/">&larr; Retour à l'accueil</a></p>
+        <footer>
+            <p>Pas encore de compte ? <a href="/register">Créer un compte</a></p>
+            <p><a href="/">&larr; Retour à l'accueil</a></p>
+        </footer>
     </main>
 </body>
 </html>

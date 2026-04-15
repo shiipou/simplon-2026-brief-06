@@ -3,6 +3,7 @@
 <%@ page import="java.time.format.DateTimeFormatter" %>
 <%@ page import="fr.simplon.models.Post" %>
 <%@ page import="fr.simplon.models.User" %>
+<%@ page import="fr.simplon.models.Attachment" %>
 
 <%
     User currentUser = (User) request.getAttribute("currentUser");
@@ -23,66 +24,82 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/app.css">
 </head>
 <body>
-    <header class="top-bar">
-        <h1 class="logo"><a href="/feed">Miniature</a></h1>
-        <div class="top-bar-right">
-            <a href="/profile" class="current-user-link"><%=currentUser.getUsername()%></a>
-            <form method="post" action="/logout" class="inline-form">
-                <button type="submit" class="btn btn-danger btn-sm">Déconnexion</button>
+    <header>
+        <h1><a href="/feed">Miniature</a></h1>
+        <nav>
+            <a href="/profile"><%=currentUser.getUsername()%></a>
+            <form method="post" action="/logout">
+                <button type="submit">Déconnexion</button>
             </form>
-        </div>
+        </nav>
     </header>
 
-    <main>
-        <a href="/feed" class="back-link">&larr; Retour au fil</a>
+    <main id="post-detail">
+        <a href="/feed">&larr; Retour au fil</a>
 
         <!-- Post principal -->
-        <article class="post-card post-detail">
-            <div class="post-header">
-                <a href="/profile?id=<%=post.getOwner().getId()%>" class="post-author-link"><strong class="post-author"><%=post.getOwner().getUsername()%></strong></a>
+        <article>
+            <header>
+                <a href="/profile?id=<%=post.getOwner().getId()%>"><strong><%=post.getOwner().getUsername()%></strong></a>
                 <% if (post.getOwner().getId() != currentUser.getId()) { %>
-                    <form method="post" action="/follow" class="inline-form">
+                    <form method="post" action="/follow">
                         <input type="hidden" name="userId" value="<%=post.getOwner().getId()%>" />
                         <input type="hidden" name="redirect" value="/post?id=<%=post.getId()%>" />
-                        <button type="submit" class="btn-follow <%= isFollowing ? "following" : "" %>">
+                        <button type="submit" <%= isFollowing ? "class=\"following\"" : "" %>>
                             <%= isFollowing ? "Abonn&eacute;" : "Suivre" %>
                         </button>
                     </form>
                 <% } %>
-                <time class="post-date"><%=post.getCreatedAt().format(fmt)%></time>
-            </div>
-            <p class="post-content"><%=post.getContent()%></p>
-            <div class="post-actions">
-                <form method="post" action="/like" class="inline-form">
+                <time datetime="<%=post.getCreatedAt()%>"><%=post.getCreatedAt().format(fmt)%></time>
+            </header>
+            <p><%=post.getContent()%></p>
+            <% for (Attachment att : post.getAttachments()) { %>
+                <% if (att.isImage()) { %>
+                    <figure>
+                        <img src="<%=att.getImage()%>" alt="Pièce jointe" />
+                    </figure>
+                <% } else if (att.isSharedPost() && att.getPost() != null) { %>
+                    <aside>
+                        <header>
+                            <a href="/profile?id=<%=att.getPost().getOwner().getId()%>"><strong><%=att.getPost().getOwner().getUsername()%></strong></a>
+                            <time datetime="<%=att.getPost().getCreatedAt()%>"><%=att.getPost().getCreatedAt().format(fmt)%></time>
+                        </header>
+                        <p><%=att.getPost().getContent()%></p>
+                        <a href="/post?id=<%=att.getPost().getId()%>">Voir le post original &rarr;</a>
+                    </aside>
+                <% } %>
+            <% } %>
+            <footer>
+                <form method="post" action="/like">
                     <input type="hidden" name="postId" value="<%=post.getId()%>" />
                     <input type="hidden" name="redirect" value="/post?id=<%=post.getId()%>" />
-                    <button type="submit" class="btn-action <%= likedByUser ? "liked" : "" %>">
+                    <button type="submit" <%= likedByUser ? "class=\"liked\"" : "" %>>
                         <%= likedByUser ? "&#9829;" : "&#9825;" %> <%=likeCount%>
                     </button>
                 </form>
-            </div>
+            </footer>
         </article>
 
         <!-- Formulaire de commentaire -->
-        <form method="post" action="/post" class="comment-form">
+        <form method="post" action="/post">
             <input type="hidden" name="postId" value="<%=post.getId()%>" />
             <textarea name="content" placeholder="Écrire un commentaire..." required rows="2"></textarea>
-            <button type="submit" class="btn btn-primary">Commenter</button>
+            <button type="submit">Commenter</button>
         </form>
 
         <!-- Liste des commentaires -->
-        <section class="comments-section">
+        <section id="comments">
             <h2>Commentaires (<%=comments.size()%>)</h2>
             <% if (comments.isEmpty()) { %>
-                <p class="empty-message">Aucun commentaire pour le moment.</p>
+                <p>Aucun commentaire pour le moment.</p>
             <% } else { %>
                 <% for (Post comment : comments) { %>
-                    <article class="comment-card">
-                        <div class="comment-header">
+                    <article>
+                        <header>
                             <strong><%=comment.getOwner().getUsername()%></strong>
-                            <time class="post-date"><%=comment.getCreatedAt().format(fmt)%></time>
-                        </div>
-                        <p class="comment-content"><%=comment.getContent()%></p>
+                            <time datetime="<%=comment.getCreatedAt()%>"><%=comment.getCreatedAt().format(fmt)%></time>
+                        </header>
+                        <p><%=comment.getContent()%></p>
                     </article>
                 <% } %>
             <% } %>
